@@ -28,7 +28,8 @@ class RepositorioFactura
     }
 
     public function store( Factura $factura)
-    {
+    {        
+        $id_usuario =$factura->getIdUsuario();
         $nombre = $factura->getNombre();
         $apellido = $factura->getApellido();
         $detalle = $factura->getDetalle();
@@ -36,14 +37,13 @@ class RepositorioFactura
         $ciudad = $factura->getCiudad();
         $calle = $factura->getCalle();
         $altura = $factura->getAltura();
-        $id_usuario =$factura->getIdUsuario();
-
-        $q = "INSERT INTO facturas (nombre, apellido, detalle, importe, ciudad, calle, altura, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $q = "INSERT INTO facturas (id_usuario, nombre, apellido, detalle, importe, ciudad, calle, altura) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try{
             $query = self::$conexion->prepare($q);
     
-            $query->bind_param($nombre, $apellido, $detalle, $ciudad, $calle, $importe, $altura, $id_usuario);
+            $query->bind_param("ssssissi", $id_usuario, $nombre, $apellido, $detalle, $importe, $ciudad, $calle, $altura);
     
             if ($query->execute()) {
                 return self::$conexion->insert_id;
@@ -54,6 +54,27 @@ class RepositorioFactura
             return false;
         }
     }
-   
+
+    public function get_all(Usuario $usuario)
+    {
+        $idUsuario = $usuario->getId();
+        $q = "SELECT nombre, apellido, detalle, importe, ciudad, calle, altura, numero FROM facturas WHERE id_usuario = ? ";
+        try{
+            $query = self::$conexion->prepare($q);
+            $query->bind_param("i", $idUsuario);
+            $query->bind_result($nombre, $apellido, $detalle, $importe, $ciudad, $calle, $altura, $numero);
+    
+            if ($query->execute()){
+                $listaFacturas = array();
+                while ($query->fetch()){
+                    $listaFacturas[] = new Factura($usuario, $nombre, $apellido, $detalle, $importe, $ciudad, $calle, $altura, $numero);
+                }
+                return $listaFacturas;
+            }
+            return false;
+        } catch(Exception $e){
+            return false;
+        }
+    }   
 }
     
