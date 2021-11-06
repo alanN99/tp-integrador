@@ -1,6 +1,6 @@
 <?php
 
-require_once 'clases/Usuario.php';
+require_once 'Usuario.php';
 
 class Factura
 {
@@ -68,6 +68,22 @@ class Factura
     public function setNumero($n)
     {
         $this->numero = $n;
+    }
+
+    public function editar($n,$a,$d,$i,$c,$ca,$al)
+    {
+        if($this->nombre <> $n || $this->apellido <> $a || $this->detalle <> $d || $this->importe <> $i || $this->ciudad <> $c || $this->calle <> $ca || $this->altura <> $al) {
+            $this->nombre = $n;
+            $this->apellido = $a;
+            $this->detalle = $d;
+            $this->importe = $i;
+            $this->ciudad = $c;
+            $this->calle = $ca;
+            $this->altura = $al;
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

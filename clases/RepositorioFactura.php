@@ -1,32 +1,11 @@
 <?php
 require_once '.env.php';
-require_once 'clases/Usuario.php';
-require_once 'clases/Factura.php';
+require_once 'Repositorio.php';
+require_once 'Usuario.php';
+require_once 'Factura.php';
 
-class RepositorioFactura
+class RepositorioFactura extends Repositorio
 {
-    private static $conexion = null;
-
-    public function __construct()
-    {
-        if (is_null(self::$conexion)) {
-            $credenciales = credenciales();
-            self::$conexion = new mysqli(   
-                $credenciales['servidor'],
-                $credenciales['usuario'],
-                $credenciales['clave'],
-                $credenciales['base_de_datos']
-            );
-
-            if(self::$conexion->connect_error) {
-                $error = 'Error de conexión: '.self::$conexion->connect_error;
-                self::$conexion = null;
-                die($error);
-            }
-            self::$conexion->set_charset('utf8'); 
-        }
-    }
-
     public function store( Factura $factura)
     {        
         $id_usuario =$factura->getIdUsuario();
@@ -76,5 +55,55 @@ class RepositorioFactura
             return false;
         }
     }   
+
+    public function get_one($numero)
+    {        
+        $q = "SELECT nombre, apellido, detalle, importe, ciudad, calle, altura, id_usuario FROM facturas WHERE numero = ? ";
+        try{
+            $query = self::$conexion->prepare($q);
+            $query->bind_param("i", $numero);
+            $query->bind_result($nombre, $apellido, $detalle, $importe, $ciudad, $calle, $altura, $id_usuario);
+    
+            if ($query->execute()){
+                $listaFacturas = array();
+                while ($query->fetch()){
+                    $ru = new RepositorioUsuario();
+                    $usuario = $ru->get_one($id_usuario);
+                    return new Factura($usuario, $nombre, $apellido, $detalle, $importe, $ciudad, $calle, $altura, $numero);
+                }
+                return $listaFacturas;
+            }
+            return false;
+        } catch(Exception $e){
+            return false;
+        }
+    }
+    
+    public function delete(Factura $factura)
+    {
+        $n = $factura->getNumero();
+        $q = "DELETE FROM facturas WHERE numero = ?";
+        $query = self::$conexion->prepare($q);
+        $query->bind_param("i", $n);
+        return ($query->execute());
+    }
+
+    public function actualizarFactura(Factura $factura)
+    {
+        $n = $factura->getNombre();
+        $a = $factura->getApellido();
+        $d = $factura->getDetalle();
+        $i = $factura->getImporte();
+        $c = $factura->getCiudad();
+        $ca = $factura->getCalle();
+        $al = $factura->getAltura();
+
+        $q = "UPDATE facturas SET nombre = ?, apellido = ?, detalle = ?, importe = ?, ciudad = ?, calle = ?, altura = ? WHERE numero = ?";
+        
+        $query = self::$conexion->prepare($q);
+        $query->bind_param("sssissi", $n, $a, $d, $i, $c, $ca, $al);
+
+        return $query->execute();
+    }
 }
     
